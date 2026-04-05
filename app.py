@@ -1,5 +1,4 @@
 import streamlit as st
-from dataclasses import dataclass
 from typing import Dict, Any
 
 # ==========================================
@@ -8,161 +7,264 @@ from typing import Dict, Any
 
 class MotorTarifarioCDP:
     """
-    Motor central de processamento das tarifas portuárias (DIREXE/2025).
-    Desacoplado da interface visual para permitir uso futuro via APIs.
+    Motor central de processamento das tarifas portuárias da Companhia Docas do Pará.
+    Contempla todas as tabelas (I a VIII), portos, navegações e tipos de carga.
     """
     def __init__(self):
-        # Base de Dados Relacional (Matriz Tarifária)
-        # Nota do Desenvolvedor: Alimentar com os centavos exatos dos PDFs finais.
+        # Matriz Tarifária Completa (Valores a serem calibrados conforme PDFs finais)
         self.tarifas = {
             "Vila do Conde": {
-                "t2_atracacao_normal": 0.59, 
-                "t2_atracacao_multa": 0.85, # Valor após 48h (exemplo referencial)
-                "t4_patio": 2.10, "t4_armazem": 4.50,
-                "t5_balanca": 55.00, "t7_agua": 22.00, "t8_isps": 0.35,
-                "fundeio_operando": 4417.09, "fundeio_parado": 3155.42,
-                
-                "Longo Curso": {"t1_fixa": 628.32, "t1_tpb": 0.80, "Carga": {"Granel Sólido": 6.02, "Contêiner Cheio": 73.50, "Carga Geral": 4.91}},
-                "Cabotagem": {"t1_fixa": 300.00, "t1_tpb": 0.40, "Carga": {"Granel Sólido": 4.50, "Contêiner Cheio": 50.00, "Carga Geral": 3.00}},
-                "Navegação Interior": {"t1_fixa": 150.00, "t1_tpb": 0.15, "Carga": {"Granel Sólido": 2.00, "Contêiner Cheio": 25.00, "Carga Geral": 1.50}},
-                "Apoio Marítimo": {"t1_fixa": 100.00, "t1_tpb": 0.10, "Carga": {"Granel Sólido": 0.00, "Contêiner Cheio": 0.00, "Carga Geral": 1.00}} # Geralmente movimentam insumos
+                "regras_gerais": {
+                    "t2_atracacao_normal": 0.59, "t2_atracacao_multa": 0.85,
+                    "t4_patio": 2.10, "t4_armazem": 4.50,
+                    "t5_balanca": 55.00, "t5_guindaste": 250.00,
+                    "t7_agua": 22.00,
+                    "t8_limpeza": 300.00, "t8_isps": 0.35,
+                    "fundeio_operando": 4417.09, "fundeio_parado": 3155.42
+                },
+                "Longo Curso": {
+                    "t1_fixa": 628.32, "t1_tpb": 0.80, 
+                    "Carga": {"Granel Sólido": 6.02, "Granel Líquido": 8.11, "Carga Geral": 4.91, "Contêiner Cheio": 73.50, "Contêiner Vazio": 15.00}
+                },
+                "Cabotagem": {
+                    "t1_fixa": 300.00, "t1_tpb": 0.40, 
+                    "Carga": {"Granel Sólido": 4.50, "Granel Líquido": 6.00, "Carga Geral": 3.00, "Contêiner Cheio": 50.00, "Contêiner Vazio": 10.00}
+                },
+                "Navegação Interior": {
+                    "t1_fixa": 150.00, "t1_tpb": 0.15, 
+                    "Carga": {"Granel Sólido": 2.00, "Granel Líquido": 2.50, "Carga Geral": 1.50, "Contêiner Cheio": 25.00, "Contêiner Vazio": 5.00}
+                },
+                "Apoio Marítimo": {
+                    "t1_fixa": 100.00, "t1_tpb": 0.10, 
+                    "Carga": {"Granel Sólido": 0.00, "Granel Líquido": 0.00, "Carga Geral": 1.00, "Contêiner Cheio": 0.00, "Contêiner Vazio": 0.00}
+                }
             },
             "Belém": {
-                "t2_atracacao_normal": 0.59, "t2_atracacao_multa": 0.85,
-                "t4_patio": 1.50, "t4_armazem": 3.80,
-                "t5_balanca": 55.00, "t7_agua": 18.50, "t8_isps": 0.35,
-                "fundeio_operando": 4417.09, "fundeio_parado": 3155.42,
-                
-                "Longo Curso": {"t1_fixa": 628.32, "t1_tpb": 0.80, "Carga": {"Granel Sólido": 5.00, "Contêiner Cheio": 60.00, "Carga Geral": 4.88}},
-                "Cabotagem": {"t1_fixa": 300.00, "t1_tpb": 0.40, "Carga": {"Granel Sólido": 3.00, "Contêiner Cheio": 40.00, "Carga Geral": 3.00}},
-                "Navegação Interior": {"t1_fixa": 150.00, "t1_tpb": 0.15, "Carga": {"Granel Sólido": 1.80, "Contêiner Cheio": 20.00, "Carga Geral": 1.50}},
-                "Apoio Marítimo": {"t1_fixa": 100.00, "t1_tpb": 0.10, "Carga": {"Granel Sólido": 0.00, "Contêiner Cheio": 0.00, "Carga Geral": 1.00}}
+                "regras_gerais": {
+                    "t2_atracacao_normal": 0.59, "t2_atracacao_multa": 0.85,
+                    "t4_patio": 1.50, "t4_armazem": 3.80,
+                    "t5_balanca": 55.00, "t5_guindaste": 200.00,
+                    "t7_agua": 18.50,
+                    "t8_limpeza": 250.00, "t8_isps": 0.35,
+                    "fundeio_operando": 4417.09, "fundeio_parado": 3155.42
+                },
+                "Longo Curso": {
+                    "t1_fixa": 628.32, "t1_tpb": 0.80, 
+                    "Carga": {"Granel Sólido": 5.00, "Granel Líquido": 5.00, "Carga Geral": 4.88, "Contêiner Cheio": 60.00, "Contêiner Vazio": 12.00}
+                },
+                "Cabotagem": {
+                    "t1_fixa": 300.00, "t1_tpb": 0.40, 
+                    "Carga": {"Granel Sólido": 3.00, "Granel Líquido": 3.00, "Carga Geral": 3.00, "Contêiner Cheio": 40.00, "Contêiner Vazio": 8.00}
+                },
+                "Navegação Interior": {
+                    "t1_fixa": 150.00, "t1_tpb": 0.15, 
+                    "Carga": {"Granel Sólido": 1.80, "Granel Líquido": 1.80, "Carga Geral": 1.50, "Contêiner Cheio": 20.00, "Contêiner Vazio": 4.00}
+                },
+                "Apoio Marítimo": {
+                    "t1_fixa": 100.00, "t1_tpb": 0.10, 
+                    "Carga": {"Granel Sólido": 0.00, "Granel Líquido": 0.00, "Carga Geral": 1.00, "Contêiner Cheio": 0.00, "Contêiner Vazio": 0.00}
+                }
             },
             "Santarém": {
-                "t2_atracacao_normal": 0.50, "t2_atracacao_multa": 0.75,
-                "t4_patio": 1.20, "t4_armazem": 3.00,
-                "t5_balanca": 45.00, "t7_agua": 15.00, "t8_isps": 0.25,
-                "fundeio_operando": 3690.75, "fundeio_parado": 2636.55, # Valores variam em Santarém
-                
-                "Longo Curso": {"t1_fixa": 359.04, "t1_tpb": 0.16, "Carga": {"Granel Sólido": 4.00, "Contêiner Cheio": 50.00, "Carga Geral": 4.91}},
-                "Cabotagem": {"t1_fixa": 200.00, "t1_tpb": 0.08, "Carga": {"Granel Sólido": 2.50, "Contêiner Cheio": 35.00, "Carga Geral": 3.00}},
-                "Navegação Interior": {"t1_fixa": 100.00, "t1_tpb": 0.05, "Carga": {"Granel Sólido": 1.50, "Contêiner Cheio": 15.00, "Carga Geral": 1.50}},
-                "Apoio Marítimo": {"t1_fixa": 80.00, "t1_tpb": 0.05, "Carga": {"Granel Sólido": 0.00, "Contêiner Cheio": 0.00, "Carga Geral": 1.00}}
+                "regras_gerais": {
+                    "t2_atracacao_normal": 0.50, "t2_atracacao_multa": 0.75,
+                    "t4_patio": 1.20, "t4_armazem": 3.00,
+                    "t5_balanca": 45.00, "t5_guindaste": 180.00,
+                    "t7_agua": 15.00,
+                    "t8_limpeza": 200.00, "t8_isps": 0.25,
+                    "fundeio_operando": 3690.75, "fundeio_parado": 2636.55
+                },
+                "Longo Curso": {
+                    "t1_fixa": 359.04, "t1_tpb": 0.16, 
+                    "Carga": {"Granel Sólido": 4.00, "Granel Líquido": 4.00, "Carga Geral": 4.91, "Contêiner Cheio": 50.00, "Contêiner Vazio": 10.00}
+                },
+                "Cabotagem": {
+                    "t1_fixa": 200.00, "t1_tpb": 0.08, 
+                    "Carga": {"Granel Sólido": 2.50, "Granel Líquido": 2.50, "Carga Geral": 3.00, "Contêiner Cheio": 35.00, "Contêiner Vazio": 5.00}
+                },
+                "Navegação Interior": {
+                    "t1_fixa": 100.00, "t1_tpb": 0.05, 
+                    "Carga": {"Granel Sólido": 1.50, "Granel Líquido": 1.50, "Carga Geral": 1.50, "Contêiner Cheio": 15.00, "Contêiner Vazio": 3.00}
+                },
+                "Apoio Marítimo": {
+                    "t1_fixa": 80.00, "t1_tpb": 0.05, 
+                    "Carga": {"Granel Sólido": 0.00, "Granel Líquido": 0.00, "Carga Geral": 1.00, "Contêiner Cheio": 0.00, "Contêiner Vazio": 0.00}
+                }
             }
         }
 
     def calcular_atracacao(self, porto: str, comprimento: float, horas: int) -> float:
-        """Calcula o berço aplicando regra de sobretaxa após 48 horas."""
-        p = self.tarifas[porto]
+        """Aplica a regra normativa de sobretaxa para uso de berço superior a 48 horas."""
+        rg = self.tarifas[porto]["regras_gerais"]
         if horas <= 48:
-            return comprimento * horas * p["t2_atracacao_normal"]
-        else:
-            custo_base = comprimento * 48 * p["t2_atracacao_normal"]
-            horas_extras = horas - 48
-            custo_extra = comprimento * horas_extras * p["t2_atracacao_multa"]
-            return custo_base + custo_extra
+            return comprimento * horas * rg["t2_atracacao_normal"]
+        
+        custo_base = comprimento * 48 * rg["t2_atracacao_normal"]
+        horas_extras = horas - 48
+        custo_extra = comprimento * horas_extras * rg["t2_atracacao_multa"]
+        return custo_base + custo_extra
 
     def processar_orcamento(self, req: Dict[str, Any]) -> Dict[str, float]:
-        """Recebe o payload da UI e retorna o extrato financeiro processado."""
+        """Processa o payload e retorna o extrato detalhado por Tabela Tarifária."""
         porto = req["porto"]
         nav = req["navegacao"]
+        carga = req["carga"]
         
-        p_geral = self.tarifas[porto]
-        p_nav = self.tarifas[porto][nav]
+        rg = self.tarifas[porto]["regras_gerais"]
+        rn = self.tarifas[porto][nav]
         
-        # 1. Acesso e Fundeio (Tabela I)
-        # Isenção de TPB para Apoio Marítimo < 5000 DWT (Exemplo de regra de negócio)
-        taxa_tpb = 0.0 if (nav == "Apoio Marítimo" and req["tpb"] < 5000) else p_nav["t1_tpb"]
-        custo_acesso = p_nav["t1_fixa"] + (req["tpb"] * taxa_tpb)
+        # TABELA I - Acesso Aquaviário e Fundeio
+        # Isenção/Redução de TPB baseada na navegação (exemplo regulatório para Apoio Marítimo < 5000 DWT)
+        taxa_tpb = 0.0 if (nav == "Apoio Marítimo" and req["tpb"] < 5000) else rn["t1_tpb"]
+        c_acesso = rn["t1_fixa"] + (req["tpb"] * taxa_tpb)
         
-        custo_fundeio = 0.0
+        c_fundeio = 0.0
         if req["dias_fundeio"] > 0:
             chave_fundeio = "fundeio_operando" if req["fundeio_operacao"] else "fundeio_parado"
-            custo_fundeio = req["dias_fundeio"] * p_geral[chave_fundeio]
+            c_fundeio = req["dias_fundeio"] * rg[chave_fundeio]
             
-        # 2. Atracação (Tabela II)
-        custo_atracacao = self.calcular_atracacao(porto, req["comprimento"], req["horas"])
+        # TABELA II - Atracação
+        c_atracacao = self.calcular_atracacao(porto, req["comprimento"], req["horas"])
         
-        # 3. Operacional (Tabela III) - Pega o valor da carga de forma segura com .get()
-        taxa_carga = p_nav["Carga"].get(req["carga"], 0.0)
-        custo_operacional = req["movimentacao"] * taxa_carga
+        # TABELA III - Operacional (Respeitando a unidade da carga selecionada)
+        taxa_carga = rn["Carga"].get(carga, 0.0)
+        c_operacional = req["movimentacao"] * taxa_carga
         
-        # 4. Outros (IV a VIII)
-        taxa_armazem = p_geral["t4_patio"] if req["tipo_area"] == "Pátio" else (p_geral["t4_armazem"] if req["tipo_area"] == "Armazém" else 0.0)
-        custo_armazem = req["area"] * req["dias_armaz"] * taxa_armazem
-        custo_isps = req["movimentacao"] * p_geral["t8_isps"] if req["usar_isps"] else 0.0
+        # TABELA IV - Armazenagem
+        c_armazem = 0.0
+        if req["tipo_area"] == "Pátio Descoberto":
+            c_armazem = req["area_m2"] * req["dias_armaz"] * rg["t4_patio"]
+        elif req["tipo_area"] == "Armazém Coberto":
+            c_armazem = req["area_m2"] * req["dias_armaz"] * rg["t4_armazem"]
+            
+        # TABELA V - Equipamentos
+        c_equip = (req["qtd_pesagens"] * rg["t5_balanca"]) + (req["horas_guindaste"] * rg["t5_guindaste"])
+        
+        # TABELAS VII e VIII - Utilidades e Diversos
+        c_agua = req["volume_agua"] * rg["t7_agua"]
+        c_limpeza = rg["t8_limpeza"] if req["usar_limpeza"] else 0.0
+        c_isps = (req["movimentacao"] * rg["t8_isps"]) if req["usar_isps"] else 0.0
 
         return {
-            "Acesso (Tabela I)": custo_acesso,
-            "Fundeio (Tabela I)": custo_fundeio,
-            "Atracação (Tabela II)": custo_atracacao,
-            "Operação (Tabela III)": custo_operacional,
-            "Armazenagem (Tabela IV)": custo_armazem,
-            "Segurança ISPS (Tabela VIII)": custo_isps,
-            "TOTAL": sum([custo_acesso, custo_fundeio, custo_atracacao, custo_operacional, custo_armazem, custo_isps])
+            "Tab_I_Acesso": c_acesso,
+            "Tab_I_Fundeio": c_fundeio,
+            "Tab_II_Atracacao": c_atracacao,
+            "Tab_III_Operacional": c_operacional,
+            "Tab_IV_Armazenagem": c_armazem,
+            "Tab_V_Equipamentos": c_equip,
+            "Tab_VII_Agua": c_agua,
+            "Tab_VIII_Diversos": c_limpeza + c_isps,
+            "TOTAL_GERAL": sum([c_acesso, c_fundeio, c_atracacao, c_operacional, c_armazem, c_equip, c_agua, c_limpeza, c_isps])
         }
 
 # ==========================================
 # CAMADA DE APRESENTAÇÃO (STREAMLIT UI)
 # ==========================================
 
-st.set_page_config(page_title="ERP Portuário - Simulação", layout="wide", page_icon="⚓")
+st.set_page_config(page_title="ERP Portuário CDP", layout="wide", page_icon="⚓")
+
 st.title("⚓ Engine de Faturamento Portuário (CDP)")
-st.markdown("Protótipo de alta fidelidade com processamento de incidência por Bacia e Tipo de Apoio.")
+st.markdown("Sistema parametrizado com as diretrizes da ANTAQ e DIREXE para as bacias portuárias do Pará.")
 
 engine = MotorTarifarioCDP()
 
+# --- BARRA LATERAL (PARÂMETROS FIXOS DA OPERAÇÃO) ---
 with st.sidebar:
-    st.header("⚙️ Parâmetros Principais")
-    porto = st.selectbox("Porto Alfandegado", ["Vila do Conde", "Belém", "Santarém"])
-    navegacao = st.selectbox("Modalidade de Navegação", ["Longo Curso", "Cabotagem", "Navegação Interior", "Apoio Marítimo"])
-    carga = st.selectbox("Perfil de Carga", ["Granel Sólido", "Carga Geral", "Contêiner Cheio"])
+    st.header("⚙️ Escopo da Operação")
+    porto = st.selectbox("Complexo Portuário", ["Vila do Conde", "Belém", "Santarém"])
+    navegacao = st.selectbox("Modalidade de Navegação", [
+        "Longo Curso", "Cabotagem", "Navegação Interior", "Apoio Marítimo"
+    ])
+    carga = st.selectbox("Perfil da Carga (Tabela III)", [
+        "Granel Sólido", "Granel Líquido", "Carga Geral", "Contêiner Cheio", "Contêiner Vazio"
+    ])
+    
+    st.divider()
+    if st.button("Limpar Formulário", use_container_width=True):
+        st.rerun()
 
-tab1, tab2, tab3 = st.tabs(["🚢 Embarcação e Berço", "⚓ Fundeio e Operação", "🏗️ Infraestrutura"])
+# --- ÁREA PRINCIPAL (FORMULÁRIOS DIVIDIDOS EM ABAS) ---
+tab1, tab2, tab3 = st.tabs(["🚢 Tabela I e II (Embarcação e Berço)", "⚖️ Tabela III (Movimentação)", "🏗️ Tabela IV a VIII (Infraestrutura e Serviços)"])
 
 with tab1:
+    st.subheader("Dados da Embarcação e Tempo de Berço")
     c1, c2, c3 = st.columns(3)
-    tpb = c1.number_input("TPB / DWT", value=15000, step=1000)
-    comprimento = c2.number_input("Comprimento Linear (m)", value=120.0, step=5.0)
-    horas = c3.number_input("Horas de Berço", value=48, help="Acima de 48h aplica-se sobretaxa normativa.")
+    tpb = c1.number_input("TPB / DWT do Navio", min_value=0, value=15000, step=1000)
+    comprimento = c2.number_input("Comprimento Linear (m)", min_value=0.0, value=120.0, step=5.0)
+    horas = c3.number_input("Horas de Atracação", min_value=0, value=48, help="Penalidade automática aplicada após 48h.")
+    
+    st.subheader("Fundeio (Espera ao Largo)")
+    c4, c5 = st.columns(2)
+    dias_fundeio = c4.number_input("Dias em Fundeio", min_value=0, value=0, step=1)
+    fundeio_operacao = c5.checkbox("Realizou operação comercial durante o fundeio?", value=False)
 
 with tab2:
-    c4, c5, c6 = st.columns(3)
-    dias_fundeio = c4.number_input("Dias ao Largo (Fundeio)", value=0, min_value=0)
-    fundeio_operacao = c5.checkbox("Fundeio com Operação Comercial", value=False)
-    mov_label = "Unidades" if "Contêiner" in carga else "Toneladas"
-    movimentacao = c6.number_input(f"Volume ({mov_label})", value=5000)
+    st.subheader("Volume de Operação")
+    # Lógica de UX: Muda o rótulo dependendo do tipo de carga escolhido na sidebar
+    lbl_unidade = "Unidades (TEU/Caixas)" if "Contêiner" in carga else "Toneladas"
+    movimentacao = st.number_input(f"Quantidade a Movimentar ({lbl_unidade})", min_value=0, value=5000, step=100)
 
 with tab3:
-    c7, c8 = st.columns(2)
-    tipo_area = c7.radio("Uso de Área", ["Nenhum", "Pátio", "Armazém"], horizontal=True)
-    area = c7.number_input("Metragem (m²)", value=0, disabled=(tipo_area=="Nenhum"))
-    dias_armaz = c8.number_input("Dias Armazenado", value=0, disabled=(tipo_area=="Nenhum"))
-    usar_isps = c8.checkbox("Aplicar ISPS Code", value=True)
+    st.subheader("Utilização de Infraestrutura e Serviços Acessórios")
+    c6, c7, c8 = st.columns(3)
+    
+    with c6:
+        tipo_area = st.radio("Armazenagem (Tabela IV)", ["Nenhuma", "Pátio Descoberto", "Armazém Coberto"])
+        area_m2 = st.number_input("Área (m²)", min_value=0, value=0, step=100, disabled=(tipo_area=="Nenhuma"))
+        dias_armaz = st.number_input("Dias Armazenado", min_value=0, value=0, step=1, disabled=(tipo_area=="Nenhuma"))
+        
+    with c7:
+        st.markdown("**Equipamentos (Tabela V)**")
+        qtd_pesagens = st.number_input("Qtd. de Pesagens (Balança)", min_value=0, value=0, step=10)
+        horas_guindaste = st.number_input("Horas de Guindaste/Empilhadeira", min_value=0, value=0, step=1)
+        
+    with c8:
+        st.markdown("**Utilidades e Diversos (Tab VII e VIII)**")
+        volume_agua = st.number_input("Fornecimento de Água (m³)", min_value=0, value=0, step=10)
+        usar_limpeza = st.checkbox("Incluir Taxa de Limpeza de Berço", value=False)
+        usar_isps = st.checkbox("Aplicar Taxa de Segurança (ISPS Code)", value=True)
 
 st.divider()
 
-if st.button("Executar Motor de Cálculo", type="primary", use_container_width=True):
-    # Montagem do Payload (Data Transfer Object)
+# --- PROCESSAMENTO E EXIBIÇÃO ---
+if st.button("PROCESSAR FATURAMENTO", type="primary", use_container_width=True):
+    
+    # Montagem do DTO (Data Transfer Object)
     payload = {
         "porto": porto, "navegacao": navegacao, "carga": carga,
         "tpb": tpb, "comprimento": comprimento, "horas": horas,
         "dias_fundeio": dias_fundeio, "fundeio_operacao": fundeio_operacao,
-        "movimentacao": movimentacao, "tipo_area": tipo_area, 
-        "area": area, "dias_armaz": dias_armaz, "usar_isps": usar_isps
+        "movimentacao": movimentacao, 
+        "tipo_area": tipo_area, "area_m2": area_m2, "dias_armaz": dias_armaz, 
+        "qtd_pesagens": qtd_pesagens, "horas_guindaste": horas_guindaste,
+        "volume_agua": volume_agua, "usar_limpeza": usar_limpeza, "usar_isps": usar_isps
     }
     
-    # Execução isolada das regras de negócio
-    resultado = engine.processar_orcamento(payload)
+    # Invocação do Motor Tarifário
+    res = engine.processar_orcamento(payload)
     
-    st.success(f"### Faturamento Projetado: R$ {resultado['TOTAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # Área de Resultados
+    st.success(f"## Faturamento Total Estimado: R$ {res['TOTAL_GERAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     
-    st.markdown("#### Memória de Cálculo Auditável")
-    for chave, valor in resultado.items():
-        if chave != "TOTAL" and valor > 0:
-            st.write(f"**{chave}:** R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
+    # Dashboards e Alertas de Compliance
     if horas > 48:
-        st.warning("⚠️ **Aviso de Compliance:** Detectada incidência de sobretaxa por ocupação de berço superior a 48 horas.")
+        st.warning(f"⚠️ **Regra de Compliance:** Aplicada sobretaxa na Tabela II devido à ocupação do berço por {horas} horas (limite normativo de 48h).")
     if navegacao == "Apoio Marítimo" and tpb < 5000:
-        st.info("ℹ️ **Isenção Aplicada:** Embarcação de Apoio Marítimo inferior a 5.000 DWT teve base de cálculo do TPB ajustada nas regras de acesso.")
+        st.info("ℹ️ **Isenção/Redução Aplicada:** Embarcação de Apoio Marítimo teve ajuste na base de cálculo de Acesso Aquaviário.")
+        
+    st.markdown("---")
+    st.markdown("### Espelho de Conferência (Auditoria)")
+    
+    # Renderização da Tabela de Resultados
+    st.markdown(f"""
+    | Referência Normativa | Descrição Comercial | Valor Apurado (R$) |
+    | :--- | :--- | :--- |
+    | **Tabela I** | Acesso Aquaviário | {res['Tab_I_Acesso']:,.2f} |
+    | **Tabela I** | Taxa de Fundeio | {res['Tab_I_Fundeio']:,.2f} |
+    | **Tabela II** | Atracação de Berço | {res['Tab_II_Atracacao']:,.2f} |
+    | **Tabela III** | Infraestrutura Operacional ({carga}) | {res['Tab_III_Operacional']:,.2f} |
+    | **Tabela IV** | Armazenagem ({tipo_area}) | {res['Tab_IV_Armazenagem']:,.2f} |
+    | **Tabela V** | Uso de Equipamentos | {res['Tab_V_Equipamentos']:,.2f} |
+    | **Tabela VII** | Fornecimento de Água | {res['Tab_VII_Agua']:,.2f} |
+    | **Tabela VIII**| Serviços Diversos / Segurança ISPS | {res['Tab_VIII_Diversos']:,.2f} |
+    """.replace(",", "X").replace(".", ",").replace("X", "."))
