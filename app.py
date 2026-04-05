@@ -2,16 +2,22 @@ import streamlit as st
 from typing import Dict, Any
 
 # ==========================================
+# CAMADA DE UTILIDADES
+# ==========================================
+def format_br(valor: float) -> str:
+    """Formata float para o padrão monetário brasileiro (ex: 1.234,56)."""
+    return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+# ==========================================
 # CAMADA DE NEGÓCIOS (DOMÍNIO)
 # ==========================================
-
 class MotorTarifarioCDP:
     """
-    Motor central de processamento das tarifas portuárias da Companhia Docas do Pará.
-    Contempla todas as tabelas (I a VIII), portos, navegações e tipos de carga.
+    Motor central de processamento das tarifas portuárias da CDP.
+    Retorna o valor apurado e a respectiva memória de cálculo.
     """
     def __init__(self):
-        # Matriz Tarifária Completa (Valores a serem calibrados conforme PDFs finais)
+        # Matriz Tarifária Completa (Valores referenciais das deliberações)
         self.tarifas = {
             "Vila do Conde": {
                 "regras_gerais": {
@@ -93,143 +99,145 @@ class MotorTarifarioCDP:
             }
         }
 
-    def calcular_atracacao(self, porto: str, comprimento: float, horas: int) -> float:
-        """Aplica a regra normativa de sobretaxa para uso de berço superior a 48 horas."""
-        rg = self.tarifas[porto]["regras_gerais"]
+    def calcular_atracacao(self, rg: Dict, comprimento: float, horas: int) -> Dict:
+        """Aplica a regra normativa de sobretaxa para uso de berço e gera a memória."""
+        if horas == 0:
+            return {"valor": 0.0, "memoria": "Sem atracação"}
+            
         if horas <= 48:
-            return comprimento * horas * rg["t2_atracacao_normal"]
+            valor = comprimento * horas * rg["t2_atracacao_normal"]
+            memoria = f"[{format_br(comprimento)}m x {horas}h x R$ {format_br(rg['t2_atracacao_normal'])}]"
+            return {"valor": valor, "memoria": memoria}
         
+        # Multa por ultrapassar 48h
         custo_base = comprimento * 48 * rg["t2_atracacao_normal"]
         horas_extras = horas - 48
         custo_extra = comprimento * horas_extras * rg["t2_atracacao_multa"]
-        return custo_base + custo_extra
-
-    def processar_orcamento(self, req: Dict[str, Any]) -> Dict[str, float]:
-        """Processa o payload e retorna o extrato detalhado por Tabela Tarifária."""
-        porto = req["porto"]
-        nav = req["navegacao"]
-        carga = req["carga"]
         
+        memoria_base = f"[{format_br(comprimento)}m x 48h x R$ {format_br(rg['t2_atracacao_normal'])}]"
+        memoria_extra = f" + [{format_br(comprimento)}m x {horas_extras}h x R$ {format_br(rg['t2_atracacao_multa'])} (Excedente)]"
+        
+        return {"valor": custo_base + custo_extra, "memoria": memoria_base + memoria_extra}
+
+    def processar_orcamento(self, req: Dict[str, Any]) -> Dict[str, Any]:
+        porto, nav, carga = req["porto"], req["navegacao"], req["carga"]
         rg = self.tarifas[porto]["regras_gerais"]
         rn = self.tarifas[porto][nav]
         
-        # TABELA I - Acesso Aquaviário e Fundeio
-        # Isenção/Redução de TPB baseada na navegação (exemplo regulatório para Apoio Marítimo < 5000 DWT)
-        taxa_tpb = 0.0 if (nav == "Apoio Marítimo" and req["tpb"] < 5000) else rn["t1_tpb"]
-        c_acesso = rn["t1_fixa"] + (req["tpb"] * taxa_tpb)
+        # Extrato final armazenará dicts com 'valor' e 'memoria'
+        extrato = {}
         
-        c_fundeio = 0.0
+        # TABELA I - Acesso Aquaviário
+        taxa_tpb = 0.0 if (nav == "Apoio Marítimo" and req["tpb"] < 5000) else rn["t1_tpb"]
+        val_acesso = rn["t1_fixa"] + (req["tpb"] * taxa_tpb)
+        mem_acesso = f"Fixo R$ {format_br(rn['t1_fixa'])} + ({req['tpb']} TPB x R$ {format_br(taxa_tpb)})"
+        if taxa_tpb == 0.0: mem_acesso += " *[Isenção de TPB Aplicada]*"
+        extrato["Tab_I_Acesso"] = {"valor": val_acesso, "memoria": mem_acesso}
+        
+        # TABELA I - Fundeio
         if req["dias_fundeio"] > 0:
             chave_fundeio = "fundeio_operando" if req["fundeio_operacao"] else "fundeio_parado"
-            c_fundeio = req["dias_fundeio"] * rg[chave_fundeio]
+            val_fundeio = req["dias_fundeio"] * rg[chave_fundeio]
+            extrato["Tab_I_Fundeio"] = {"valor": val_fundeio, "memoria": f"{req['dias_fundeio']} dias x R$ {format_br(rg[chave_fundeio])}"}
+        else:
+            extrato["Tab_I_Fundeio"] = {"valor": 0.0, "memoria": "Sem registro de fundeio"}
             
         # TABELA II - Atracação
-        c_atracacao = self.calcular_atracacao(porto, req["comprimento"], req["horas"])
+        extrato["Tab_II_Atracacao"] = self.calcular_atracacao(rg, req["comprimento"], req["horas"])
         
-        # TABELA III - Operacional (Respeitando a unidade da carga selecionada)
+        # TABELA III - Operacional
         taxa_carga = rn["Carga"].get(carga, 0.0)
-        c_operacional = req["movimentacao"] * taxa_carga
+        val_operacional = req["movimentacao"] * taxa_carga
+        unidade_lbl = "Unidades" if "Contêiner" in carga else "Ton"
+        extrato["Tab_III_Operacional"] = {"valor": val_operacional, "memoria": f"{req['movimentacao']} {unidade_lbl} x R$ {format_br(taxa_carga)}"}
         
         # TABELA IV - Armazenagem
-        c_armazem = 0.0
-        if req["tipo_area"] == "Pátio Descoberto":
-            c_armazem = req["area_m2"] * req["dias_armaz"] * rg["t4_patio"]
-        elif req["tipo_area"] == "Armazém Coberto":
-            c_armazem = req["area_m2"] * req["dias_armaz"] * rg["t4_armazem"]
+        if req["tipo_area"] != "Nenhuma" and req["area_m2"] > 0 and req["dias_armaz"] > 0:
+            taxa_armaz = rg["t4_patio"] if req["tipo_area"] == "Pátio Descoberto" else rg["t4_armazem"]
+            val_armaz = req["area_m2"] * req["dias_armaz"] * taxa_armaz
+            extrato["Tab_IV_Armazenagem"] = {"valor": val_armaz, "memoria": f"{req['area_m2']}m² x {req['dias_armaz']} dias x R$ {format_br(taxa_armaz)}"}
+        else:
+            extrato["Tab_IV_Armazenagem"] = {"valor": 0.0, "memoria": "Sem movimentação de área"}
             
         # TABELA V - Equipamentos
-        c_equip = (req["qtd_pesagens"] * rg["t5_balanca"]) + (req["horas_guindaste"] * rg["t5_guindaste"])
+        val_equip = (req["qtd_pesagens"] * rg["t5_balanca"]) + (req["horas_guindaste"] * rg["t5_guindaste"])
+        mem_equip_parts = []
+        if req["qtd_pesagens"] > 0: mem_equip_parts.append(f"({req['qtd_pesagens']} pesagens x R$ {format_br(rg['t5_balanca'])})")
+        if req["horas_guindaste"] > 0: mem_equip_parts.append(f"({req['horas_guindaste']}h guindaste x R$ {format_br(rg['t5_guindaste'])})")
+        mem_equip = " + ".join(mem_equip_parts) if mem_equip_parts else "Sem requisição de equipamentos"
+        extrato["Tab_V_Equipamentos"] = {"valor": val_equip, "memoria": mem_equip}
         
-        # TABELAS VII e VIII - Utilidades e Diversos
-        c_agua = req["volume_agua"] * rg["t7_agua"]
-        c_limpeza = rg["t8_limpeza"] if req["usar_limpeza"] else 0.0
-        c_isps = (req["movimentacao"] * rg["t8_isps"]) if req["usar_isps"] else 0.0
+        # TABELA VII - Água
+        val_agua = req["volume_agua"] * rg["t7_agua"]
+        extrato["Tab_VII_Agua"] = {"valor": val_agua, "memoria": f"{req['volume_agua']}m³ x R$ {format_br(rg['t7_agua'])}" if req["volume_agua"] > 0 else "Sem fornecimento"}
+        
+        # TABELA VIII - Diversos e ISPS
+        val_limpeza = rg["t8_limpeza"] if req["usar_limpeza"] else 0.0
+        val_isps = (req["movimentacao"] * rg["t8_isps"]) if req["usar_isps"] else 0.0
+        mem_div_parts = []
+        if req["usar_limpeza"]: mem_div_parts.append(f"Limpeza (Fixo R$ {format_br(rg['t8_limpeza'])})")
+        if req["usar_isps"]: mem_div_parts.append(f"ISPS ({req['movimentacao']} {unidade_lbl} x R$ {format_br(rg['t8_isps'])})")
+        mem_div = " + ".join(mem_div_parts) if mem_div_parts else "Isento de taxas adicionais"
+        extrato["Tab_VIII_Diversos"] = {"valor": val_limpeza + val_isps, "memoria": mem_div}
 
-        return {
-            "Tab_I_Acesso": c_acesso,
-            "Tab_I_Fundeio": c_fundeio,
-            "Tab_II_Atracacao": c_atracacao,
-            "Tab_III_Operacional": c_operacional,
-            "Tab_IV_Armazenagem": c_armazem,
-            "Tab_V_Equipamentos": c_equip,
-            "Tab_VII_Agua": c_agua,
-            "Tab_VIII_Diversos": c_limpeza + c_isps,
-            "TOTAL_GERAL": sum([c_acesso, c_fundeio, c_atracacao, c_operacional, c_armazem, c_equip, c_agua, c_limpeza, c_isps])
-        }
+        # Calcula o Total Geral somando os valores dos dicionários internos
+        extrato["TOTAL_GERAL"] = sum(item["valor"] for item in extrato.values() if isinstance(item, dict))
+        
+        return extrato
 
 # ==========================================
 # CAMADA DE APRESENTAÇÃO (STREAMLIT UI)
 # ==========================================
-
 st.set_page_config(page_title="ERP Portuário CDP", layout="wide", page_icon="⚓")
-
 st.title("⚓ Engine de Faturamento Portuário (CDP)")
-st.markdown("Sistema parametrizado com as diretrizes da ANTAQ e DIREXE para as bacias portuárias do Pará.")
+st.markdown("Sistema parametrizado com diretrizes da ANTAQ/DIREXE, incluindo geração de **Memória de Cálculo** auditável.")
 
 engine = MotorTarifarioCDP()
 
-# --- BARRA LATERAL (PARÂMETROS FIXOS DA OPERAÇÃO) ---
 with st.sidebar:
     st.header("⚙️ Escopo da Operação")
     porto = st.selectbox("Complexo Portuário", ["Vila do Conde", "Belém", "Santarém"])
-    navegacao = st.selectbox("Modalidade de Navegação", [
-        "Longo Curso", "Cabotagem", "Navegação Interior", "Apoio Marítimo"
-    ])
-    carga = st.selectbox("Perfil da Carga (Tabela III)", [
-        "Granel Sólido", "Granel Líquido", "Carga Geral", "Contêiner Cheio", "Contêiner Vazio"
-    ])
+    navegacao = st.selectbox("Modalidade de Navegação", ["Longo Curso", "Cabotagem", "Navegação Interior", "Apoio Marítimo"])
+    carga = st.selectbox("Perfil da Carga (Tabela III)", ["Granel Sólido", "Granel Líquido", "Carga Geral", "Contêiner Cheio", "Contêiner Vazio"])
     
     st.divider()
     if st.button("Limpar Formulário", use_container_width=True):
         st.rerun()
 
-# --- ÁREA PRINCIPAL (FORMULÁRIOS DIVIDIDOS EM ABAS) ---
-tab1, tab2, tab3 = st.tabs(["🚢 Tabela I e II (Embarcação e Berço)", "⚖️ Tabela III (Movimentação)", "🏗️ Tabela IV a VIII (Infraestrutura e Serviços)"])
+tab1, tab2, tab3 = st.tabs(["🚢 Embarcação e Berço", "⚖️ Movimentação", "🏗️ Infraestrutura e Serviços"])
 
 with tab1:
-    st.subheader("Dados da Embarcação e Tempo de Berço")
     c1, c2, c3 = st.columns(3)
-    tpb = c1.number_input("TPB / DWT do Navio", min_value=0, value=15000, step=1000)
+    tpb = c1.number_input("TPB / DWT", min_value=0, value=15000, step=1000)
     comprimento = c2.number_input("Comprimento Linear (m)", min_value=0.0, value=120.0, step=5.0)
-    horas = c3.number_input("Horas de Atracação", min_value=0, value=48, help="Penalidade automática aplicada após 48h.")
+    horas = c3.number_input("Horas de Atracação", min_value=0, value=48, help="Penalidade após 48h.")
     
-    st.subheader("Fundeio (Espera ao Largo)")
     c4, c5 = st.columns(2)
     dias_fundeio = c4.number_input("Dias em Fundeio", min_value=0, value=0, step=1)
-    fundeio_operacao = c5.checkbox("Realizou operação comercial durante o fundeio?", value=False)
+    fundeio_operacao = c5.checkbox("Operação comercial no fundeio?", value=False)
 
 with tab2:
-    st.subheader("Volume de Operação")
-    # Lógica de UX: Muda o rótulo dependendo do tipo de carga escolhido na sidebar
     lbl_unidade = "Unidades (TEU/Caixas)" if "Contêiner" in carga else "Toneladas"
     movimentacao = st.number_input(f"Quantidade a Movimentar ({lbl_unidade})", min_value=0, value=5000, step=100)
 
 with tab3:
-    st.subheader("Utilização de Infraestrutura e Serviços Acessórios")
     c6, c7, c8 = st.columns(3)
-    
     with c6:
         tipo_area = st.radio("Armazenagem (Tabela IV)", ["Nenhuma", "Pátio Descoberto", "Armazém Coberto"])
         area_m2 = st.number_input("Área (m²)", min_value=0, value=0, step=100, disabled=(tipo_area=="Nenhuma"))
         dias_armaz = st.number_input("Dias Armazenado", min_value=0, value=0, step=1, disabled=(tipo_area=="Nenhuma"))
-        
     with c7:
-        st.markdown("**Equipamentos (Tabela V)**")
-        qtd_pesagens = st.number_input("Qtd. de Pesagens (Balança)", min_value=0, value=0, step=10)
-        horas_guindaste = st.number_input("Horas de Guindaste/Empilhadeira", min_value=0, value=0, step=1)
-        
+        qtd_pesagens = st.number_input("Qtd. de Pesagens", min_value=0, value=0, step=10)
+        horas_guindaste = st.number_input("Horas Guindaste", min_value=0, value=0, step=1)
     with c8:
-        st.markdown("**Utilidades e Diversos (Tab VII e VIII)**")
-        volume_agua = st.number_input("Fornecimento de Água (m³)", min_value=0, value=0, step=10)
-        usar_limpeza = st.checkbox("Incluir Taxa de Limpeza de Berço", value=False)
-        usar_isps = st.checkbox("Aplicar Taxa de Segurança (ISPS Code)", value=True)
+        volume_agua = st.number_input("Fornecimento Água (m³)", min_value=0, value=0, step=10)
+        usar_limpeza = st.checkbox("Incluir Limpeza de Berço", value=False)
+        usar_isps = st.checkbox("Aplicar ISPS Code", value=True)
 
 st.divider()
 
-# --- PROCESSAMENTO E EXIBIÇÃO ---
 if st.button("PROCESSAR FATURAMENTO", type="primary", use_container_width=True):
     
-    # Montagem do DTO (Data Transfer Object)
     payload = {
         "porto": porto, "navegacao": navegacao, "carga": carga,
         "tpb": tpb, "comprimento": comprimento, "horas": horas,
@@ -240,31 +248,26 @@ if st.button("PROCESSAR FATURAMENTO", type="primary", use_container_width=True):
         "volume_agua": volume_agua, "usar_limpeza": usar_limpeza, "usar_isps": usar_isps
     }
     
-    # Invocação do Motor Tarifário
     res = engine.processar_orcamento(payload)
     
-    # Área de Resultados
-    st.success(f"## Faturamento Total Estimado: R$ {res['TOTAL_GERAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    st.success(f"## Faturamento Total Estimado: R$ {format_br(res['TOTAL_GERAL'])}")
     
-    # Dashboards e Alertas de Compliance
     if horas > 48:
-        st.warning(f"⚠️ **Regra de Compliance:** Aplicada sobretaxa na Tabela II devido à ocupação do berço por {horas} horas (limite normativo de 48h).")
-    if navegacao == "Apoio Marítimo" and tpb < 5000:
-        st.info("ℹ️ **Isenção/Redução Aplicada:** Embarcação de Apoio Marítimo teve ajuste na base de cálculo de Acesso Aquaviário.")
+        st.warning(f"⚠️ **Regra de Compliance:** Aplicada sobretaxa na Tabela II devido à ocupação do berço por {horas} horas.")
         
     st.markdown("---")
-    st.markdown("### Espelho de Conferência (Auditoria)")
+    st.markdown("### Espelho de Conferência (Auditoria e Memória de Cálculo)")
     
-    # Renderização da Tabela de Resultados
+    # Renderização da Tabela de Resultados incluindo a Memória de Cálculo
     st.markdown(f"""
-    | Referência Normativa | Descrição Comercial | Valor Apurado (R$) |
-    | :--- | :--- | :--- |
-    | **Tabela I** | Acesso Aquaviário | {res['Tab_I_Acesso']:,.2f} |
-    | **Tabela I** | Taxa de Fundeio | {res['Tab_I_Fundeio']:,.2f} |
-    | **Tabela II** | Atracação de Berço | {res['Tab_II_Atracacao']:,.2f} |
-    | **Tabela III** | Infraestrutura Operacional ({carga}) | {res['Tab_III_Operacional']:,.2f} |
-    | **Tabela IV** | Armazenagem ({tipo_area}) | {res['Tab_IV_Armazenagem']:,.2f} |
-    | **Tabela V** | Uso de Equipamentos | {res['Tab_V_Equipamentos']:,.2f} |
-    | **Tabela VII** | Fornecimento de Água | {res['Tab_VII_Agua']:,.2f} |
-    | **Tabela VIII**| Serviços Diversos / Segurança ISPS | {res['Tab_VIII_Diversos']:,.2f} |
-    """.replace(",", "X").replace(".", ",").replace("X", "."))
+    | Referência | Descrição Comercial | Valor Apurado (R$) | Memória de Cálculo (Fatores x Taxas) |
+    | :--- | :--- | :--- | :--- |
+    | **Tabela I** | Acesso Aquaviário | {format_br(res['Tab_I_Acesso']['valor'])} | `{res['Tab_I_Acesso']['memoria']}` |
+    | **Tabela I** | Taxa de Fundeio | {format_br(res['Tab_I_Fundeio']['valor'])} | `{res['Tab_I_Fundeio']['memoria']}` |
+    | **Tabela II** | Atracação de Berço | {format_br(res['Tab_II_Atracacao']['valor'])} | `{res['Tab_II_Atracacao']['memoria']}` |
+    | **Tabela III** | Infraestrutura Operacional | {format_br(res['Tab_III_Operacional']['valor'])} | `{res['Tab_III_Operacional']['memoria']}` |
+    | **Tabela IV** | Armazenagem ({tipo_area}) | {format_br(res['Tab_IV_Armazenagem']['valor'])} | `{res['Tab_IV_Armazenagem']['memoria']}` |
+    | **Tabela V** | Uso de Equipamentos | {format_br(res['Tab_V_Equipamentos']['valor'])} | `{res['Tab_V_Equipamentos']['memoria']}` |
+    | **Tabela VII** | Fornecimento de Água | {format_br(res['Tab_VII_Agua']['valor'])} | `{res['Tab_VII_Agua']['memoria']}` |
+    | **Tabela VIII**| Serviços Diversos / ISPS | {format_br(res['Tab_VIII_Diversos']['valor'])} | `{res['Tab_VIII_Diversos']['memoria']}` |
+    """)
