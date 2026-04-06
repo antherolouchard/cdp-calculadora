@@ -9,359 +9,230 @@ def format_br(valor: float) -> str:
     return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # ==========================================
-# BASE DE DADOS TARIFÁRIA INTEGRAL (DIREXE 06, 07 e 08/2025)
+# BASE DE DADOS TARIFÁRIA INTEGRAL (DIREXE 2025)
+# DADOS EXTRAÍDOS DIRETAMENTE DOS ANEXOS
 # ==========================================
 TARIFAS_CDP = {
     "Vila do Conde": {
-        "Tabela_I_Fixo": {"Longo Curso": 2261.95, "Cabotagem": 2261.95, "Navegação Interior": 2261.95, "Apoio Portuário": 2261.95, "Apoio Marítimo": 2261.95},
-        "Tabela_I_Var": {
-            "Longo Curso": {"Granel Sólido": 2.56, "Granel Líquido": 2.30, "Carga Geral": 1.15, "Contêineres": 0.48, "Veículos Roll-on/Roll-off": 1.15, "Carga Viva": 1.15, "Nenhuma": 0.00},
-            "Cabotagem": {"Granel Sólido": 1.16, "Granel Líquido": 2.30, "Carga Geral": 1.15, "Contêineres": 0.48, "Veículos Roll-on/Roll-off": 1.15, "Carga Viva": 1.15, "Nenhuma": 0.00},
-            "Navegação Interior": {"Toda Carga": 0.48}, "Apoio Portuário": {"Toda Carga": 0.48}, "Apoio Marítimo": {"Toda Carga": 0.48}
-        },
+        "Tabela_I_Fixo": 2261.95,
+        "Tabela_I_Var": {"Granel Sólido": 2.56, "Granel Líquido": 2.30, "Carga Geral": 1.15, "Contêineres": 0.48, "Veículos/Carga Viva": 1.15},
         "Tabela_I_Fundeio": {"Operando": 4417.09, "Parado": 3155.42},
-        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
+        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Apoio": 0.33},
         "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 6.02, "t4": 0.00}, 
-            "Granel Líquido": {"t3": 8.11, "t4": 0.00},
-            "Carga Geral": {"t3": 4.91, "t4": 0.00},
-            "Contêiner Cheio": {"t3": 73.50, "t4": 0.00},
-            "Contêiner Vazio": {"t3": 36.74, "t4": 0.00},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.27, "t4": 0.00}, 
-            "Ro-Ro: Cavalo mecânico": {"t3": 9.57, "t4": 0.00},               
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.82, "t4": 0.00},    
-            "Animais: Até 1.000 kg": {"t3": 6.34, "t4": 0.00},                
-            "Animais: Acima de 1.000 kg": {"t3": 12.61, "t4": 0.00}            
+            "Granel Sólido": 6.02, "Granel Líquido": 8.11, "Carga Geral": 4.91,
+            "Contêiner Cheio": 73.50, "Contêiner Vazio": 36.74,
+            "Ro-Ro: Caminhão": 38.27, "Ro-Ro: Cavalo": 9.57, "Ro-Ro: Leve": 3.82,
+            "Animais: Até 1t": 6.34, "Animais: Acima 1t": 12.61
         },
-        "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 2.10, "Armazém Coberto": 4.50},
+        "Tabela_V_Armazenagem": {"Pátio": 2.10, "Armazém": 4.50, "AdValorem": 0.005},
         "Tabela_VII_Diversos": {
-            "Agua": 15.49,
-            "Energia_kWh": 1.62,
-            "Energia_Conteiner_Dia": 120.50,
-            "Pesagem_Ton": 1.15,
-            "Area_Armazem_Fins_Diversos": 2.10,
-            "Area_Patio_Fins_Diversos": 1.10,
-            "Certidao_Operador_Portuario": 1850.00,
-            "Area_Coberta_Apoio": 2.10,
-            "Area_Descoberta_Apoio_Terra": 1.10,
-            "Area_Descoberta_Apoio_Agua": 0.55
+            "Agua": 15.49, "Energia_kWh": 1.62, "Energia_Reefer_Dia": 120.50, "Pesagem": 1.15,
+            "Certidao": 1850.00, "Armazem_Diversos": 2.10, "Patio_Diversos": 1.10,
+            "Apoio_Coberta": 2.10, "Apoio_Descoberta_Terra": 1.10, "Apoio_Descoberta_Agua": 0.55
         },
-        "Tabela_VIII_Uso_Temp": {"Pavimentada": 14.46, "Nao Pavimentada": 11.53}
-    },
-    "Belém": {
-        "Tabela_I_Fixo": {"Longo Curso": 628.32, "Cabotagem": 628.32, "Navegação Interior": 628.32, "Apoio Portuário": 628.32, "Apoio Marítimo": 628.32},
-        "Tabela_I_Var": {
-            "Longo Curso": {"Granel Sólido": 1.14, "Granel Líquido": 0.60, "Carga Geral": 0.23, "Contêineres": 0.80, "Veículos Roll-on/Roll-off": 0.23, "Carga Viva": 0.23, "Nenhuma": 0.00},
-            "Cabotagem": {"Granel Sólido": 0.52, "Granel Líquido": 0.60, "Carga Geral": 0.23, "Contêineres": 0.80, "Veículos Roll-on/Roll-off": 0.23, "Carga Viva": 0.23, "Nenhuma": 0.00},
-            "Navegação Interior": {"Toda Carga": 0.16}, "Apoio Portuário": {"Toda Carga": 0.16}, "Apoio Marítimo": {"Toda Carga": 0.16}
-        },
-        "Tabela_I_Fundeio": {"Operando": 4417.09, "Parado": 3155.42},
-        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
-        "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 4.88, "t4": 0.00}, 
-            "Granel Líquido": {"t3": 5.10, "t4": 0.00},
-            "Carga Geral": {"t3": 4.60, "t4": 0.00},
-            "Contêiner Cheio": {"t3": 60.00, "t4": 0.00},
-            "Contêiner Vazio": {"t3": 30.00, "t4": 0.00},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.14, "t4": 0.00}, 
-            "Ro-Ro: Cavalo mecânico": {"t3": 9.55, "t4": 0.00},               
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.81, "t4": 0.00},    
-            "Animais: Até 1.000 kg": {"t3": 6.34, "t4": 0.00},                
-            "Animais: Acima de 1.000 kg": {"t3": 12.61, "t4": 0.00}            
-        },
-        "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 1.50, "Armazém Coberto": 3.80},
-        "Tabela_VII_Diversos": {
-            "Agua": 15.49,
-            "Energia_kWh": 1.62,
-            "Energia_Conteiner_Dia": 120.50,
-            "Pesagem_Ton": 1.15,
-            "Area_Armazem_Fins_Diversos": 1.80,
-            "Area_Patio_Fins_Diversos": 0.90,
-            "Certidao_Operador_Portuario": 1850.00,
-            "Area_Coberta_Apoio": 1.80,
-            "Area_Descoberta_Apoio_Terra": 0.90,
-            "Area_Descoberta_Apoio_Agua": 0.45
-        },
-        "Tabela_VIII_Uso_Temp": {"Pavimentada": 14.46, "Nao Pavimentada": 11.53}
+        "Tabela_VIII": {
+            "Regime": "Arrendamento_Mes",
+            "NC_Primaria": 12.50, "NC_Remota": 7.50, "NC_Agua": 3.75,
+            "C_Primaria": 10.00, "C_Sitio": 5.00, "C_Granel": 8.00, "Giro12": 2.50
+        }
     },
     "Santarém": {
-        "Tabela_I_Fixo": {"Longo Curso": 359.04, "Cabotagem": 359.04, "Navegação Interior": 359.04, "Apoio Portuário": 359.04, "Apoio Marítimo": 359.04},
-        "Tabela_I_Var": {
-            "Longo Curso": {"Granel Sólido": 3.41, "Granel Líquido": 2.19, "Carga Geral": 0.17, "Contêineres": 0.16, "Veículos Roll-on/Roll-off": 0.17, "Carga Viva": 0.17, "Nenhuma": 0.00},
-            "Cabotagem": {"Granel Sólido": 3.58, "Granel Líquido": 0.22, "Carga Geral": 1.15, "Contêineres": 0.22, "Veículos Roll-on/Roll-off": 1.15, "Carga Viva": 1.15, "Nenhuma": 0.00},
-            "Navegação Interior": {"Toda Carga": 0.10}, "Apoio Portuário": {"Toda Carga": 0.10}, "Apoio Marítimo": {"Toda Carga": 0.10}
-        },
+        "Tabela_I_Fixo": 359.04,
+        "Tabela_I_Var": {"Granel Sólido": 3.41, "Granel Líquido": 2.19, "Carga Geral": 0.17, "Contêineres": 0.16, "Veículos/Carga Viva": 0.17},
         "Tabela_I_Fundeio": {"Operando": 3690.75, "Parado": 2636.55},
-        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
+        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Apoio": 0.33},
         "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 4.91, "t4": 0.00}, 
-            "Granel Líquido": {"t3": 4.91, "t4": 0.00},
-            "Carga Geral": {"t3": 4.91, "t4": 0.00},
-            "Contêiner Cheio": {"t3": 50.00, "t4": 0.00},
-            "Contêiner Vazio": {"t3": 25.00, "t4": 0.00},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.30, "t4": 0.00}, 
-            "Ro-Ro: Cavalo mecânico": {"t3": 9.59, "t4": 0.00},               
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.82, "t4": 0.00},    
-            "Animais: Até 1.000 kg": {"t3": 0.00, "t4": 0.00},                
-            "Animais: Acima de 1.000 kg": {"t3": 0.00, "t4": 0.00}            
+            "Granel Sólido": 4.91, "Granel Líquido": 4.91, "Carga Geral": 4.91,
+            "Contêiner Cheio": 50.00, "Contêiner Vazio": 25.00,
+            "Ro-Ro: Caminhão": 38.30, "Ro-Ro: Cavalo": 9.59, "Ro-Ro: Leve": 3.82,
+            "Animais: Até 1t": 0.00, "Animais: Acima 1t": 0.00 # Isento na imagem
         },
-        "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 1.20, "Armazém Coberto": 3.00},
+        "Tabela_V_Armazenagem": {"Pátio": 1.20, "Armazém": 3.00, "AdValorem": 0.005},
         "Tabela_VII_Diversos": {
-            "Agua": 15.49,
-            "Energia_kWh": 1.62,
-            "Energia_Conteiner_Dia": 120.50,
-            "Pesagem_Ton": 1.15,
-            "Area_Armazem_Fins_Diversos": 1.50,
-            "Area_Patio_Fins_Diversos": 0.80,
-            "Certidao_Operador_Portuario": 1850.00,
-            "Area_Coberta_Apoio": 1.50,
-            "Area_Descoberta_Apoio_Terra": 0.80,
-            "Area_Descoberta_Apoio_Agua": 0.40
+            "Agua": 15.49, "Energia_kWh": 1.62, "Energia_Reefer_Dia": 120.50, "Pesagem": 1.15,
+            "Certidao": 1850.00, "Armazem_Diversos": 1.50, "Patio_Diversos": 0.80,
+            "Apoio_Coberta": 1.50, "Apoio_Descoberta_Terra": 0.80, "Apoio_Descoberta_Agua": 0.40
         },
-        "Tabela_VIII_Uso_Temp": {"Pavimentada": 7.23, "Nao Pavimentada": 5.79}
+        "Tabela_VIII": {
+            "Regime": "Arrendamento_Mes",
+            "NC_Primaria": 6.25, "NC_Remota": 3.75, "NC_Agua": 1.88,
+            "C_Primaria": 5.00, "C_Sitio": 2.50, "C_Granel": 4.00, "Giro12": 1.25
+        }
+    },
+    "Belém": {
+        "Tabela_I_Fixo": 628.32,
+        "Tabela_I_Var": {"Granel Sólido": 1.14, "Granel Líquido": 0.60, "Carga Geral": 0.23, "Contêineres": 0.80, "Veículos/Carga Viva": 0.23},
+        "Tabela_I_Fundeio": {"Operando": 4417.09, "Parado": 3155.42},
+        "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Apoio": 0.33},
+        "Tabela_III_IV": {
+            "Granel Sólido": 4.88, "Granel Líquido": 5.10, "Carga Geral": 4.60,
+            "Contêiner Cheio": 60.00, "Contêiner Vazio": 30.00,
+            "Ro-Ro: Caminhão": 38.14, "Ro-Ro: Cavalo": 9.55, "Ro-Ro: Leve": 3.81,
+            "Animais: Até 1t": 6.34, "Animais: Acima 1t": 12.61
+        },
+        "Tabela_V_Armazenagem": {"Pátio": 1.50, "Armazém": 3.80, "AdValorem": 0.005},
+        "Tabela_VII_Diversos": {
+            "Agua": 15.49, "Energia_kWh": 1.62, "Energia_Reefer_Dia": 120.50, "Pesagem": 1.15,
+            "Certidao": 1850.00, "Armazem_Diversos": 1.80, "Patio_Diversos": 0.90,
+            "Apoio_Coberta": 1.80, "Apoio_Descoberta_Terra": 0.90, "Apoio_Descoberta_Agua": 0.45
+        },
+        "Tabela_VIII": {
+            "Regime": "Uso_Temporario_Dia",
+            "Pavimentada": 0.48, "NaoPavimentada": 0.38, "Agua": 0.18
+        }
     }
 }
 
 # ==========================================
-# ENGINE DE NEGÓCIOS
+# MOTOR DE CÁLCULO
 # ==========================================
-class MotorTarifarioCDP:
-    def processar(self, req: Dict[str, Any]) -> Dict[str, Any]:
-        db = TARIFAS_CDP[req["porto"]]
-        nav = req["navegacao"]
-        
+class EngineFaturamentoCDP:
+    def calcular(self, dados: Dict[str, Any]) -> Dict[str, Any]:
+        porto = dados["porto"]
+        t = TARIFAS_CDP[porto]
         extrato = {}
 
-        # --- TABELA I ---
-        taxa_fixa_t1 = db["Tabela_I_Fixo"][nav]
-        if nav in ["Navegação Interior", "Apoio Portuário", "Apoio Marítimo"]:
-            taxa_var_t1 = db["Tabela_I_Var"][nav]["Toda Carga"]
+        # Tabela I - Acesso
+        taxa_var = t["Tabela_I_Var"].get(dados["carga"], 0.0)
+        extrato["Tabela I - Acesso"] = {"v": t["Tabela_I_Fixo"] + (dados["tpb"] * taxa_var), "m": f"Fixo R$ {format_br(t['Tabela_I_Fixo'])} + ({dados['tpb']} TPB x R$ {format_br(taxa_var)})"}
+
+        # Tabela II - Acostagem
+        taxa_t2 = t["Tabela_II_Acostagem"]["Apoio"] if "Apoio" in dados["nav"] else t["Tabela_II_Acostagem"]["Longo Curso"]
+        extrato["Tabela II - Acostagem"] = {"v": dados["comp"] * dados["horas"] * taxa_t2, "m": f"{dados['comp']}m x {dados['horas']}h x R$ {format_br(taxa_t2)}"}
+
+        # Tabela III e IV
+        chave_op = dados["carga_detalhe"] if dados["carga_detalhe"] else dados["carga"]
+        taxa_op = t["Tabela_III_IV"].get(chave_op, 0.0)
+        extrato["Tabela III - Infra Operacional"] = {"v": dados["mov"] * taxa_op, "m": f"{dados['mov']} x R$ {format_br(taxa_op)}"}
+
+        # Tabela V - Armazenagem
+        if dados["t5_mod"] == "Ad Valorem":
+            extrato["Tabela V - Armazenagem"] = {"v": dados["t5_valor"] * t["Tabela_V_Armazenagem"]["AdValorem"], "m": f"R$ {format_br(dados['t5_valor'])} x 0,50%"}
+        elif dados["t5_area"] > 0:
+            taxa_t5 = t["Tabela_V_Armazenagem"].get(dados["t5_tipo"], 0.0)
+            extrato["Tabela V - Armazenagem"] = {"v": dados["t5_area"] * dados["t5_dias"] * taxa_t5, "m": f"{dados['t5_area']}m² x {dados['t5_dias']}d x R$ {format_br(taxa_t5)}"}
+
+        # Tabela VII - Diversos
+        s7 = t["Tabela_VII_Diversos"]
+        if dados["t7_agua"] > 0: extrato["Tabela VII - Água"] = {"v": dados["t7_agua"] * s7["Agua"], "m": f"{dados['t7_agua']}m³ x R$ {format_br(s7['Agua'])}"}
+        if dados["t7_kwh"] > 0: extrato["Tabela VII - Energia"] = {"v": dados["t7_kwh"] * s7["Energia_kWh"], "m": f"{dados['t7_kwh']}kWh x R$ {format_br(s7['Energia_kWh'])}"}
+        if dados["t7_reefer"] > 0: extrato["Tabela VII - Reefer"] = {"v": dados["t7_reefer"] * s7["Energia_Reefer_Dia"], "m": f"{dados['t7_reefer']} container/dia x R$ {format_br(s7['Energia_Reefer_Dia'])}"}
+        if dados["t7_pesagem"] > 0: extrato["Tabela VII - Pesagem"] = {"v": dados["t7_pesagem"] * s7["Pesagem"], "m": f"{dados['t7_pesagem']} ton x R$ {format_br(s7['Pesagem'])}"}
+        if dados["t7_cert"] > 0: extrato["Tabela VII - Certidões"] = {"v": dados["t7_cert"] * s7["Certidao"], "m": f"{dados['t7_cert']} unid x R$ {format_br(s7['Certidao'])}"}
+        if dados["t7_apoio_m2"] > 0:
+            taxa_apoio = s7.get(dados["t7_apoio_tipo"], 0.0)
+            extrato["Tabela VII - Áreas de Apoio"] = {"v": dados["t7_apoio_m2"] * dados["t7_apoio_dias"] * taxa_apoio, "m": f"{dados['t7_apoio_m2']}m² x {dados['t7_apoio_dias']}d x R$ {format_br(taxa_apoio)}"}
+
+        # Tabela VIII - A REVISADA
+        s8 = t["Tabela_VIII"]
+        if s8["Regime"] == "Uso_Temporario_Dia":
+            area_t8 = dados["t8_m2_belem"]
+            taxa_t8 = s8.get(dados["t8_tipo_belem"], 0.0)
+            if area_t8 > 0:
+                extrato["Tabela VIII - Uso Temporário"] = {"v": area_t8 * dados["t8_dias_belem"] * taxa_t8, "m": f"{area_t8}m² x {dados['t8_dias_belem']}d x R$ {format_br(taxa_t8)} (Belém)"}
         else:
-            taxa_var_t1 = db["Tabela_I_Var"][nav].get(req["carga_grupo"], 0.00)
-            
-        extrato["Tabela I - Acesso Aquaviário"] = {
-            "valor": taxa_fixa_t1 + (req["tpb"] * taxa_var_t1),
-            "mem": f"R$ {format_br(taxa_fixa_t1)} (Fixo) + [{format_br(req['tpb'])} TPB x R$ {format_br(taxa_var_t1)}]"
-        }
+            # VDC ou STM (Arrendamento Simplificado)
+            v8 = 0.0
+            memo8 = []
+            if dados["t8_nc_m2"] > 0:
+                tx = s8.get(dados["t8_nc_local"], 0.0)
+                v8 += dados["t8_nc_m2"] * dados["t8_meses"] * tx
+                memo8.append(f"NC: {dados['t8_nc_m2']}m² x {dados['t8_meses']}mês x R$ {format_br(tx)}")
+            if dados["t8_c_m2"] > 0:
+                tx = s8.get(dados["t8_c_local"], 0.0)
+                v8 += dados["t8_c_m2"] * dados["t8_meses"] * tx
+                memo8.append(f"C: {dados['t8_c_m2']}m² x {dados['t8_meses']}mês x R$ {format_br(tx)}")
+            if dados["t8_giro"] > 0:
+                v8 += dados["t8_giro"] * s8["Giro12"]
+                memo8.append(f"Giro12: {dados['t8_giro']} x R$ {format_br(s8['Giro12'])}")
+            if v8 > 0:
+                extrato["Tabela VIII - Arrendamento Simplificado"] = {"v": v8, "m": " | ".join(memo8)}
 
-        if req["dias_fundeio"] > 0:
-            condicao_fundeio = "Operando" if req["fundeio_operando"] else "Parado"
-            taxa_fundeio = db["Tabela_I_Fundeio"][condicao_fundeio]
-            extrato["Tabela I - Fundeio"] = {"valor": req["dias_fundeio"] * taxa_fundeio, "mem": f"{req['dias_fundeio']} dia(s) x R$ {format_br(taxa_fundeio)} ({condicao_fundeio})"}
-
-        # --- TABELA II ---
-        if req["horas_atracacao"] > 0:
-            taxa_t2 = db["Tabela_II_Acostagem"][nav]
-            extrato["Tabela II - Acostagem"] = {"valor": req["comprimento"] * req["horas_atracacao"] * taxa_t2, "mem": f"{format_br(req['comprimento'])}m x {req['horas_atracacao']}h x R$ {format_br(taxa_t2)}"}
-
-        # --- TABELAS III e IV ---
-        if req["carga_grupo"] != "Nenhuma":
-            chave_t3_t4 = req["carga_especifica"]
-            taxas_op = db["Tabela_III_IV"].get(chave_t3_t4, {"t3": 0.0, "t4": 0.0})
-            
-            if req["qtd_t3"] > 0:
-                extrato["Tabela III - Infra. Operacional"] = {"valor": req["qtd_t3"] * taxas_op["t3"], "mem": f"{format_br(req['qtd_t3'])} ({req['unid_medida']}) x R$ {format_br(taxas_op['t3'])} [{chave_t3_t4}]"}
-            
-            if req["qtd_t4"] > 0 and taxas_op["t4"] > 0:
-                extrato["Tabela IV - Movimentação"] = {"valor": req["qtd_t4"] * taxas_op["t4"], "mem": f"{format_br(req['qtd_t4'])} ({req['unid_medida']}) x R$ {format_br(taxas_op['t4'])} [{chave_t3_t4}]"}
-
-        # --- TABELA V ---
-        if req["modalidade_t5"] == "Ad Valorem (%)" and req["valor_carga_t5"] > 0:
-            taxa_t5 = db["Tabela_V_Armazenagem"]["Ad_Valorem_1_Periodo"]
-            extrato["Tabela V - Armazenagem (Valor)"] = {"valor": req["valor_carga_t5"] * taxa_t5, "mem": f"R$ {format_br(req['valor_carga_t5'])} x {taxa_t5*100}% (Ad Valorem)"}
-        elif req["modalidade_t5"] == "Por Área (m²)" and req["area_t5"] > 0:
-            taxa_t5 = db["Tabela_V_Armazenagem"][req["tipo_area_t5"]]
-            extrato["Tabela V - Armazenagem (Física)"] = {"valor": req["area_t5"] * req["dias_t5"] * taxa_t5, "mem": f"{format_br(req['area_t5'])}m² x {req['dias_t5']} dias x R$ {format_br(taxa_t5)} ({req['tipo_area_t5']})"}
-
-        # --- TABELA VII (Mapeamento Completo e Exaustivo) ---
-        t7_db = db["Tabela_VII_Diversos"]
-        
-        if req["t7_agua"] > 0:
-            extrato["Tabela VII - Água Potável"] = {"valor": req["t7_agua"] * t7_db["Agua"], "mem": f"{format_br(req['t7_agua'])} m³ x R$ {format_br(t7_db['Agua'])}"}
-            
-        if req["t7_energia_kwh"] > 0:
-            extrato["Tabela VII - Energia (Instalações)"] = {"valor": req["t7_energia_kwh"] * t7_db["Energia_kWh"], "mem": f"{format_br(req['t7_energia_kwh'])} kWh x R$ {format_br(t7_db['Energia_kWh'])}"}
-            
-        if req["t7_energia_conteiner"] > 0:
-            extrato["Tabela VII - Energia (Contêineres)"] = {"valor": req["t7_energia_conteiner"] * t7_db["Energia_Conteiner_Dia"], "mem": f"{req['t7_energia_conteiner']} (unid x dias) x R$ {format_br(t7_db['Energia_Conteiner_Dia'])}"}
-            
-        if req["t7_pesagem"] > 0:
-            extrato["Tabela VII - Pesagem de Veículos/Vagões"] = {"valor": req["t7_pesagem"] * t7_db["Pesagem_Ton"], "mem": f"{format_br(req['t7_pesagem'])} ton x R$ {format_br(t7_db['Pesagem_Ton'])}"}
-            
-        if req["t7_certidao_op"] > 0:
-            extrato["Tabela VII - Certificado Operador Portuário"] = {"valor": req["t7_certidao_op"] * t7_db["Certidao_Operador_Portuario"], "mem": f"{req['t7_certidao_op']} unid x R$ {format_br(t7_db['Certidao_Operador_Portuario'])}"}
-
-        if req["t7_area_armazem"] > 0 and req["t7_dias_armazem"] > 0:
-            extrato["Tabela VII - Área Armazém (Fins Diversos)"] = {"valor": req["t7_area_armazem"] * req["t7_dias_armazem"] * t7_db["Area_Armazem_Fins_Diversos"], "mem": f"{format_br(req['t7_area_armazem'])} m² x {req['t7_dias_armazem']} dias x R$ {format_br(t7_db['Area_Armazem_Fins_Diversos'])}"}
-
-        if req["t7_area_patio"] > 0 and req["t7_dias_patio"] > 0:
-            extrato["Tabela VII - Área Pátio (Fins Diversos)"] = {"valor": req["t7_area_patio"] * req["t7_dias_patio"] * t7_db["Area_Patio_Fins_Diversos"], "mem": f"{format_br(req['t7_area_patio'])} m² x {req['t7_dias_patio']} dias x R$ {format_br(t7_db['Area_Patio_Fins_Diversos'])}"}
-
-        if req["t7_area_cob_apoio"] > 0 and req["t7_dias_cob_apoio"] > 0:
-            extrato["Tabela VII - Área Coberta (Apoio Operacional)"] = {"valor": req["t7_area_cob_apoio"] * req["t7_dias_cob_apoio"] * t7_db["Area_Coberta_Apoio"], "mem": f"{format_br(req['t7_area_cob_apoio'])} m² x {req['t7_dias_cob_apoio']} dias x R$ {format_br(t7_db['Area_Coberta_Apoio'])}"}
-
-        if req["t7_area_desc_terra"] > 0 and req["t7_dias_desc_terra"] > 0:
-            extrato["Tabela VII - Área Descoberta Terra (Apoio)"] = {"valor": req["t7_area_desc_terra"] * req["t7_dias_desc_terra"] * t7_db["Area_Descoberta_Apoio_Terra"], "mem": f"{format_br(req['t7_area_desc_terra'])} m² x {req['t7_dias_desc_terra']} dias x R$ {format_br(t7_db['Area_Descoberta_Apoio_Terra'])}"}
-
-        if req["t7_area_desc_agua"] > 0 and req["t7_dias_desc_agua"] > 0:
-            extrato["Tabela VII - Área Descoberta Espelho d'Água"] = {"valor": req["t7_area_desc_agua"] * req["t7_dias_desc_agua"] * t7_db["Area_Descoberta_Apoio_Agua"], "mem": f"{format_br(req['t7_area_desc_agua'])} m² x {req['t7_dias_desc_agua']} dias x R$ {format_br(t7_db['Area_Descoberta_Apoio_Agua'])}"}
-
-        # --- TABELA VIII ---
-        if req["area_t8"] > 0:
-            taxa_t8 = db["Tabela_VIII_Uso_Temp"][req["tipo_piso_t8"]]
-            extrato["Tabela VIII - Uso Temp. / Arrendamento"] = {"valor": req["area_t8"] * taxa_t8, "mem": f"{format_br(req['area_t8'])}m² x R$ {format_br(taxa_t8)} ({req['tipo_piso_t8']})"}
-
-        extrato["TOTAL_GERAL"] = sum(item["valor"] for item in extrato.values())
+        extrato["TOTAL"] = sum(item["v"] for item in extrato.values())
         return extrato
 
 # ==========================================
-# INTERFACE STREAMLIT FRONT-END (Tabela VII Expandida)
+# INTERFACE
 # ==========================================
-st.set_page_config(page_title="Simulador CDP Avançado", layout="wide")
-st.title("⚓ Motor de Faturamento CDP - DIREXE 2025")
-
-motor = MotorTarifarioCDP()
+st.set_page_config(page_title="Simulador CDP Sênior", layout="wide")
+st.title("⚓ Sistema Tarifário Oficial CDP - DIREXE 2025")
 
 with st.sidebar:
-    st.header("⚙️ Configuração Macro")
-    porto = st.selectbox("Complexo Portuário", ["Vila do Conde", "Belém", "Santarém"])
-    navegacao = st.selectbox("Modalidade", ["Longo Curso", "Cabotagem", "Navegação Interior", "Apoio Portuário", "Apoio Marítimo"])
+    st.header("Parâmetros Base")
+    porto = st.selectbox("Porto Organizado", ["Vila do Conde", "Belém", "Santarém"])
+    nav = st.selectbox("Navegação", ["Longo Curso", "Cabotagem", "Apoio Portuário", "Interior"])
+    carga = st.selectbox("Grupo de Carga", ["Granel Sólido", "Granel Líquido", "Carga Geral", "Contêineres", "Veículos/Carga Viva"])
     
-    carga_grupo = st.selectbox("Grupo de Carga", [
-        "Granel Sólido", "Granel Líquido", "Carga Geral", 
-        "Contêineres", "Veículos Roll-on/Roll-off", "Carga Viva", "Nenhuma"
-    ])
-    
-    carga_especifica = carga_grupo
-    unid_medida = "Toneladas"
+    carga_detalhe = None
+    if carga == "Contêineres": carga_detalhe = st.radio("Tipo:", ["Contêiner Cheio", "Contêiner Vazio"])
+    elif carga == "Veículos/Carga Viva":
+        carga_detalhe = st.radio("Detalhe:", ["Ro-Ro: Caminhão", "Ro-Ro: Cavalo", "Ro-Ro: Leve", "Animais: Até 1t", "Animais: Acima 1t"])
 
-    if carga_grupo == "Contêineres":
-        carga_especifica = st.radio("Condição:", ["Contêiner Cheio", "Contêiner Vazio"])
-        unid_medida = "Unidades (TEU/Caixas)"
-    elif carga_grupo == "Veículos Roll-on/Roll-off":
-        carga_especifica = st.radio("Categoria (Ro-Ro):", ["Ro-Ro: Carretas, reboques ou caminhões", "Ro-Ro: Cavalo mecânico", "Ro-Ro: Automóveis e outros até 2t"])
-        unid_medida = "Unidades (Veículos)"
-    elif carga_grupo == "Carga Viva":
-        carga_especifica = st.radio("Porte:", ["Animais: Até 1.000 kg", "Animais: Acima de 1.000 kg"])
-        unid_medida = "Cabeças"
-    elif carga_grupo == "Nenhuma":
-        unid_medida = "N/A"
+tab1, tab2, tab3, tab4 = st.tabs(["🚢 Embarcação", "📦 Operação e Armazenagem", "🛠️ Serviços Diversos (VII)", "🏗️ Tabela VIII"])
 
-    st.divider()
-    if st.button("Limpar Formulário", use_container_width=True):
-        st.rerun()
-
-t1, t2, t3, t4 = st.tabs([
-    "🚢 1. Embarcação (I e II)", 
-    "📦 2. Mov. e Armazenagem (III, IV, V)", 
-    "🛠️ 3. Serviços e Apoio (VII)", 
-    "🏗️ 4. Uso de Áreas (VIII)"
-])
-
-with t1:
-    st.subheader("Tabela I e II - Acesso, Fundeio e Acostagem")
+with tab1:
     c1, c2, c3 = st.columns(3)
-    tpb = c1.number_input("TPB / DWT", min_value=0.0, value=15000.0)
-    comprimento = c2.number_input("Comprimento (m)", min_value=0.0, value=120.0)
-    horas_atracacao = c3.number_input("Permanência Berço (h)", min_value=0, value=48)
-    
-    c4, c5 = st.columns(2)
-    dias_fundeio = c4.number_input("Dias de Fundeio", min_value=0, value=0)
-    fundeio_operando = c5.checkbox("Operação no fundeio?")
+    tpb = c1.number_input("Porte Bruto (TPB)", value=15000)
+    comp = c2.number_input("Comprimento (m)", value=120.0)
+    horas = c3.number_input("Permanência (h)", value=48)
 
-with t2:
-    st.subheader(f"Movimentação (Tabelas III e IV)")
-    c6, c7 = st.columns(2)
-    qtd_t3 = c6.number_input(f"Vol. Tab III ({unid_medida})", min_value=0.0, value=0.0, disabled=(carga_grupo=="Nenhuma"))
-    qtd_t4 = c7.number_input(f"Vol. Tab IV ({unid_medida})", min_value=0.0, value=0.0, disabled=(carga_grupo=="Nenhuma"), help="Tabela IV possui tarifas Convencionais na CDP. Consulte o Operador.")
-    
-    st.markdown("---")
-    st.subheader("Armazenagem (Tabela V)")
-    modalidade_t5 = st.radio("Modalidade", ["Por Área (m²)", "Ad Valorem (%)"])
-    
-    if modalidade_t5 == "Por Área (m²)":
-        c8, c9, c10 = st.columns(3)
-        tipo_area_t5 = c8.selectbox("Instalação Tab V", ["Pátio Descoberto", "Armazém Coberto"])
-        area_t5 = c9.number_input("Área Tab V (m²)", min_value=0.0, value=0.0)
-        dias_t5 = c10.number_input("Dias Tab V", min_value=0, value=0)
-        valor_carga_t5 = 0.0
+with tab2:
+    mov = st.number_input("Volume Movimentado (Ton/Unid)", value=5000.0)
+    st.divider()
+    st.subheader("Armazenagem (Tab V)")
+    t5_mod = st.radio("Modalidade Tab V", ["Por Área (m²)", "Ad Valorem"])
+    t5_area = t5_dias = t5_valor = 0.0
+    t5_tipo = "Pátio"
+    if t5_mod == "Por Área (m²)":
+        t5_tipo = st.selectbox("Local", ["Pátio", "Armazém"])
+        t5_area = st.number_input("Área (m²)", value=0.0)
+        t5_dias = st.number_input("Dias", value=0)
     else:
-        valor_carga_t5 = st.number_input("Valor da Carga (R$)", min_value=0.0, value=0.0)
-        area_t5, dias_t5 = 0.0, 0
-        tipo_area_t5 = "Pátio Descoberto"
+        t5_valor = st.number_input("Valor Comercial da Carga (R$)", value=0.0)
 
-with t3:
-    st.subheader("Fornecimentos (Tabela VII)")
-    c11, c12, c13 = st.columns(3)
-    t7_agua = c11.number_input("Água Potável (m³)", min_value=0.0, value=0.0)
-    t7_energia_kwh = c12.number_input("Energia Área do Porto (kWh)", min_value=0.0, value=0.0)
-    t7_energia_conteiner = c13.number_input("Energia Contêiner Refrigerado (unid x dias)", min_value=0, value=0)
-    
-    st.markdown("---")
-    st.subheader("Serviços Específicos (Tabela VII)")
-    c14, c15 = st.columns(2)
-    t7_pesagem = c14.number_input("Pesagem de Vagões/Veículos (Ton/Fração)", min_value=0.0, value=0.0)
-    t7_certidao_op = c15.number_input("Certificado Operador Portuário (Qtd)", min_value=0, value=0)
-    
-    st.markdown("---")
-    st.subheader("Utilização de Áreas - Fins Diversos (Tabela VII)")
-    st.info("Cobrança por m² x dia")
-    c16, c17, c18, c19 = st.columns(4)
-    t7_area_armazem = c16.number_input("Área Armazém (m²)", min_value=0.0, value=0.0)
-    t7_dias_armazem = c17.number_input("Dias (Armazém)", min_value=0, value=0)
-    t7_area_patio = c18.number_input("Área Pátio (m²)", min_value=0.0, value=0.0)
-    t7_dias_patio = c19.number_input("Dias (Pátio)", min_value=0, value=0)
-    
-    st.subheader("Utilização de Áreas - Apoio Operacional (Tabela VII)")
-    c20, c21, c22, c23 = st.columns(4)
-    t7_area_cob_apoio = c20.number_input("Área Coberta Apoio (m²)", min_value=0.0, value=0.0)
-    t7_dias_cob_apoio = c21.number_input("Dias (Cob. Apoio)", min_value=0, value=0)
-    t7_area_desc_terra = c22.number_input("Área Desc. Terra (m²)", min_value=0.0, value=0.0)
-    t7_dias_desc_terra = c23.number_input("Dias (Desc. Terra)", min_value=0, value=0)
-    
-    c24, c25 = st.columns(2)
-    t7_area_desc_agua = c24.number_input("Área Desc. Espelho d'Água (m²)", min_value=0.0, value=0.0)
-    t7_dias_desc_agua = c25.number_input("Dias (Espelho d'Água)", min_value=0, value=0)
+with tab3:
+    c1, c2 = st.columns(2)
+    t7_agua = c1.number_input("Água (m³)", 0.0)
+    t7_kwh = c2.number_input("Energia (kWh)", 0.0)
+    t7_reefer = c1.number_input("Container Reefer (Unid x Dias)", 0)
+    t7_pesagem = c2.number_input("Pesagem (Ton)", 0.0)
+    t7_cert = st.number_input("Certidões (Qtd)", 0)
+    st.divider()
+    st.subheader("Uso de Área para Fins Diversos e Apoio")
+    t7_apoio_tipo = st.selectbox("Finalidade/Tipo", ["Armazem_Diversos", "Patio_Diversos", "Apoio_Coberta", "Apoio_Descoberta_Terra", "Apoio_Descoberta_Agua"])
+    t7_apoio_m2 = st.number_input("Área Apoio (m²)", 0.0)
+    t7_apoio_dias = st.number_input("Dias Apoio", 0)
 
-with t4:
-    st.subheader("Tabela VIII - Arrendamento Simplificado")
-    st.info("Diferente da Tabela VII (Apoio e Fins Diversos), a Tabela VIII é para Uso Temporário e Arrendamento Simplificado.")
-    c26, c27 = st.columns(2)
-    area_t8 = c26.number_input("Metragem Cedida (m²)", min_value=0.0, value=0.0)
-    tipo_piso_t8 = c27.radio("Piso Tab VIII", ["Pavimentada", "Nao Pavimentada"], disabled=(area_t8==0.0))
+with tab4:
+    st.subheader(f"Regra Específica: {porto}")
+    t8_m2_belem = t8_dias_belem = t8_nc_m2 = t8_c_m2 = t8_giro = t8_meses = 0.0
+    t8_tipo_belem = t8_nc_local = t8_c_local = ""
 
-st.divider()
+    if porto == "Belém":
+        st.info("Regime de Uso Temporário (Diário)")
+        t8_tipo_belem = st.selectbox("Pavimentação", ["Pavimentada", "NaoPavimentada", "Agua"])
+        t8_m2_belem = st.number_input("Área (m²)", 0.0, key="b1")
+        t8_dias_belem = st.number_input("Dias", 0, key="b2")
+    else:
+        st.info("Regime de Arrendamento Simplificado (Mensal)")
+        t8_meses = st.number_input("Meses (ou fração)", 1, key="m1")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**Cargas Não Consolidadas**")
+            t8_nc_local = st.selectbox("Tipo de Área (NC)", ["NC_Primaria", "NC_Remota", "NC_Agua"])
+            t8_nc_m2 = st.number_input("Área NC (m²)", 0.0)
+        with c2:
+            st.markdown("**Cargas Consolidadas/Granel**")
+            t8_c_local = st.selectbox("Tipo de Área (C)", ["C_Primaria", "C_Sitio", "C_Granel"])
+            t8_c_m2 = st.number_input("Área C (m²)", 0.0)
+        t8_giro = st.number_input("Base Giro 12 (Indicador)", 0.0)
 
-if st.button("GERAR ESPELHO DE FATURAMENTO", type="primary", use_container_width=True):
-    payload = {
-        "porto": porto, "navegacao": navegacao, 
-        "carga_grupo": carga_grupo, "carga_especifica": carga_especifica,
-        "tpb": tpb, "comprimento": comprimento, "horas_atracacao": horas_atracacao,
-        "dias_fundeio": dias_fundeio, "fundeio_operando": fundeio_operando,
-        "qtd_t3": qtd_t3, "qtd_t4": qtd_t4, "unid_medida": unid_medida,
-        "modalidade_t5": modalidade_t5, "valor_carga_t5": valor_carga_t5, 
-        "area_t5": area_t5, "dias_t5": dias_t5, "tipo_area_t5": tipo_area_t5,
-        "t7_agua": t7_agua, "t7_energia_kwh": t7_energia_kwh, "t7_energia_conteiner": t7_energia_conteiner,
-        "t7_pesagem": t7_pesagem, "t7_certidao_op": t7_certidao_op,
-        "t7_area_armazem": t7_area_armazem, "t7_dias_armazem": t7_dias_armazem,
-        "t7_area_patio": t7_area_patio, "t7_dias_patio": t7_dias_patio,
-        "t7_area_cob_apoio": t7_area_cob_apoio, "t7_dias_cob_apoio": t7_dias_cob_apoio,
-        "t7_area_desc_terra": t7_area_desc_terra, "t7_dias_desc_terra": t7_dias_desc_terra,
-        "t7_area_desc_agua": t7_area_desc_agua, "t7_dias_desc_agua": t7_dias_desc_agua,
-        "area_t8": area_t8, "tipo_piso_t8": tipo_piso_t8
-    }
-    
-    res = motor.processar(payload)
-    
-    st.success(f"## TOTAL FATURADO: R$ {format_br(res['TOTAL_GERAL'])}")
-    st.markdown("### 📋 Memória de Cálculo Oficial (CDP - DIREXE 2025)")
-    
-    html = "| Tabela/Rubrica (ANTAQ/CDP) | Valor Apurado (R$) | Trilha de Cálculo e Memória |\n| :--- | :--- | :--- |\n"
+if st.button("CALCULAR FATURAMENTO ESTIMADO", type="primary", use_container_width=True):
+    engine = EngineFaturamentoCDP()
+    res = engine.calcular(locals())
+    st.success(f"### TOTAL: R$ {format_br(res['TOTAL'])}")
     for k, v in res.items():
-        if k != "TOTAL_GERAL" and v["valor"] > 0:
-            html += f"| **{k}** | R$ {format_br(v['valor'])} | `{v['mem']}` |\n"
-            
-    if len(res) == 1:
-        st.warning("Preencha os campos operacionais nas abas acima para simular a tarifa.")
-    else:
-        st.markdown(html)
+        if k != "TOTAL" and v["v"] > 0:
+            with st.expander(f"{k}"):
+                st.write(f"**Valor:** R$ {format_br(v['v'])}")
+                st.caption(f"Fórmula: {v['m']}")
