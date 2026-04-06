@@ -28,16 +28,16 @@ TARIFAS_CDP = {
         "Tabela_I_Fundeio": {"Operando": 4417.09, "Parado": 3155.42},
         "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
         "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 6.02, "t4": 6.02},
-            "Granel Líquido": {"t3": 8.11, "t4": 8.11},
-            "Carga Geral": {"t3": 4.91, "t4": 4.91},
-            "Contêiner Cheio": {"t3": 73.50, "t4": 73.50},
-            "Contêiner Vazio": {"t3": 36.74, "t4": 36.74},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 0.00, "t4": 0.00}, # Inserir centavos do anexo
-            "Ro-Ro: Cavalo mecânico": {"t3": 0.00, "t4": 0.00},               # Inserir centavos do anexo
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 0.00, "t4": 0.00},    # Inserir centavos do anexo
-            "Animais: Até 1.000 kg": {"t3": 0.00, "t4": 0.00},                # Inserir centavos do anexo
-            "Animais: Acima de 1.000 kg": {"t3": 0.00, "t4": 0.00}            # Inserir centavos do anexo
+            "Granel Sólido": {"t3": 6.02, "t4": 0.00}, # t4 é Convencional
+            "Granel Líquido": {"t3": 8.11, "t4": 0.00},
+            "Carga Geral": {"t3": 4.91, "t4": 0.00},
+            "Contêiner Cheio": {"t3": 73.50, "t4": 0.00},
+            "Contêiner Vazio": {"t3": 36.74, "t4": 0.00},
+            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.27, "t4": 0.00}, 
+            "Ro-Ro: Cavalo mecânico": {"t3": 9.57, "t4": 0.00},               
+            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.82, "t4": 0.00},    
+            "Animais: Até 1.000 kg": {"t3": 6.34, "t4": 0.00},                
+            "Animais: Acima de 1.000 kg": {"t3": 12.61, "t4": 0.00}            
         },
         "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 2.10, "Armazém Coberto": 4.50},
         "Tabela_VII_Diversos": {"Agua": 15.49},
@@ -55,16 +55,16 @@ TARIFAS_CDP = {
         "Tabela_I_Fundeio": {"Operando": 4417.09, "Parado": 3155.42},
         "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
         "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 4.88, "t4": 4.88},
-            "Granel Líquido": {"t3": 5.10, "t4": 5.10},
-            "Carga Geral": {"t3": 4.60, "t4": 4.60},
-            "Contêiner Cheio": {"t3": 60.00, "t4": 60.00},
-            "Contêiner Vazio": {"t3": 30.00, "t4": 30.00},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 0.00, "t4": 0.00}, 
-            "Ro-Ro: Cavalo mecânico": {"t3": 0.00, "t4": 0.00},               
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 0.00, "t4": 0.00},    
-            "Animais: Até 1.000 kg": {"t3": 0.00, "t4": 0.00},                
-            "Animais: Acima de 1.000 kg": {"t3": 0.00, "t4": 0.00}            
+            "Granel Sólido": {"t3": 4.88, "t4": 0.00}, # t4 é Convencional
+            "Granel Líquido": {"t3": 5.10, "t4": 0.00},
+            "Carga Geral": {"t3": 4.60, "t4": 0.00},
+            "Contêiner Cheio": {"t3": 60.00, "t4": 0.00},
+            "Contêiner Vazio": {"t3": 30.00, "t4": 0.00},
+            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.14, "t4": 0.00}, 
+            "Ro-Ro: Cavalo mecânico": {"t3": 9.55, "t4": 0.00},               
+            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.81, "t4": 0.00},    
+            "Animais: Até 1.000 kg": {"t3": 6.34, "t4": 0.00},                
+            "Animais: Acima de 1.000 kg": {"t3": 12.61, "t4": 0.00}            
         },
         "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 1.50, "Armazém Coberto": 3.80},
         "Tabela_VII_Diversos": {"Agua": 15.49},
@@ -82,16 +82,16 @@ TARIFAS_CDP = {
         "Tabela_I_Fundeio": {"Operando": 3690.75, "Parado": 2636.55},
         "Tabela_II_Acostagem": {"Longo Curso": 0.59, "Cabotagem": 0.59, "Navegação Interior": 0.59, "Apoio Portuário": 0.33, "Apoio Marítimo": 0.33},
         "Tabela_III_IV": {
-            "Granel Sólido": {"t3": 4.91, "t4": 4.91},
-            "Granel Líquido": {"t3": 4.91, "t4": 4.91},
-            "Carga Geral": {"t3": 4.91, "t4": 4.91},
-            "Contêiner Cheio": {"t3": 50.00, "t4": 50.00},
-            "Contêiner Vazio": {"t3": 25.00, "t4": 25.00},
-            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 0.00, "t4": 0.00}, 
-            "Ro-Ro: Cavalo mecânico": {"t3": 0.00, "t4": 0.00},               
-            "Ro-Ro: Automóveis e outros até 2t": {"t3": 0.00, "t4": 0.00},    
-            "Animais: Até 1.000 kg": {"t3": 0.00, "t4": 0.00},                
-            "Animais: Acima de 1.000 kg": {"t3": 0.00, "t4": 0.00}            
+            "Granel Sólido": {"t3": 4.91, "t4": 0.00}, # t4 é Convencional
+            "Granel Líquido": {"t3": 4.91, "t4": 0.00},
+            "Carga Geral": {"t3": 4.91, "t4": 0.00},
+            "Contêiner Cheio": {"t3": 50.00, "t4": 0.00},
+            "Contêiner Vazio": {"t3": 25.00, "t4": 0.00},
+            "Ro-Ro: Carretas, reboques ou caminhões": {"t3": 38.30, "t4": 0.00}, 
+            "Ro-Ro: Cavalo mecânico": {"t3": 9.59, "t4": 0.00},               
+            "Ro-Ro: Automóveis e outros até 2t": {"t3": 3.82, "t4": 0.00},    
+            "Animais: Até 1.000 kg": {"t3": 0.00, "t4": 0.00}, # Isento / Sem tarifa na imagem               
+            "Animais: Acima de 1.000 kg": {"t3": 0.00, "t4": 0.00} # Isento / Sem tarifa na imagem            
         },
         "Tabela_V_Armazenagem": {"Ad_Valorem_1_Periodo": 0.005, "Pátio Descoberto": 1.20, "Armazém Coberto": 3.00},
         "Tabela_VII_Diversos": {"Agua": 15.49},
